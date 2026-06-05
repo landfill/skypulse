@@ -1,65 +1,136 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useCallback, useRef } from 'react';
+import RadarCanvas from '@/components/RadarCanvas';
+import RadarHUD from '@/components/RadarHUD';
+import LayerControls from '@/components/LayerControls';
+import ObjectTooltip from '@/components/ObjectTooltip';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useAircraft } from '@/hooks/useAircraft';
+import { useEarthquakes } from '@/hooks/useEarthquakes';
+import { useSatellites } from '@/hooks/useSatellites';
+import type { LayerVisibility, RadiusKm, RadarObject, CanvasPoint } from '@/lib/types';
+
+export default function HomePage() {
+  const [visibility, setVisibility] = useState<LayerVisibility>({
+    aircraft: true,
+    satellite: true,
+    earthquake: true,
+  });
+  const [radiusKm, setRadiusKm] = useState<RadiusKm>(50);
+  const [tooltip, setTooltip] = useState<{
+    obj: RadarObject;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [canvasSize, setCanvasSize] = useState(300);
+  const pointsRef = useRef<CanvasPoint[]>([]);
+
+  const location = useGeolocation();
+  const { objects: aircraft, status: acStatus } = useAircraft(
+    location.lat, location.lng, radiusKm, visibility.aircraft
+  );
+  const { objects: earthquakes, status: eqStatus } = useEarthquakes(
+    location.lat, location.lng, radiusKm, visibility.earthquake
+  );
+  const { objects: satellites, status: satStatus } = useSatellites(
+    location.lat, location.lng, radiusKm, visibility.satellite
+  );
+
+  const allObjects: RadarObject[] = [
+    ...(visibility.aircraft ? aircraft : []),
+    ...(visibility.satellite ? satellites : []),
+    ...(visibility.earthquake ? earthquakes : []),
+  ];
+
+  const handleToggle = (layer: keyof LayerVisibility) => {
+    setVisibility(v => ({ ...v, [layer]: !v[layer] }));
+  };
+
+  const handlePointsUpdate = useCallback((pts: CanvasPoint[]) => {
+    pointsRef.current = pts;
+    // 캔버스 크기 추론 (첫 렌더 후 안정화됨)
+    if (pts.length > 0) return;
+    const el = document.querySelector('canvas');
+    if (el) setCanvasSize(parseInt(el.style.width ?? '300'));
+  }, []);
+
+  // 캔버스 크기 업데이트
+  const updateCanvasSize = useCallback(() => {
+    const el = document.querySelector('canvas');
+    if (el) setCanvasSize(parseInt(el.style.width ?? '300'));
+  }, []);
+
+  const handleTap = useCallback((x: number, y: number) => {
+    // 캔버스 크기 갱신
+    updateCanvasSize();
+
+    const pts = pointsRef.current;
+    if (pts.length === 0) {
+      setTooltip(null);
+      return;
+    }
+
+    // 가장 가까운 포인트 찾기 (히트 반경 20px)
+    const HIT_RADIUS = 20;
+    let closest: CanvasPoint | null = null;
+    let minDist = HIT_RADIUS;
+
+    for (const pt of pts) {
+      const dist = Math.sqrt((pt.x - x) ** 2 + (pt.y - y) ** 2);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = pt;
+      }
+    }
+
+    if (closest) {
+      setTooltip({ obj: closest.obj, x: closest.x, y: closest.y });
+    } else {
+      setTooltip(null);
+    }
+  }, [updateCanvasSize]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="flex items-center justify-center w-full h-full bg-black select-none overflow-hidden">
+      {/* 레이더 영역 (relative) */}
+      <div className="relative flex items-center justify-center" style={{ width: '100%', height: '100%' }}>
+        <RadarCanvas
+          centerLat={location.lat}
+          centerLng={location.lng}
+          radiusKm={radiusKm}
+          objects={allObjects}
+          onPointsUpdate={handlePointsUpdate}
+          onTap={handleTap}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        <RadarHUD
+          location={location}
+          objectCount={allObjects.length}
+          aircraftStatus={acStatus}
+          satelliteStatus={satStatus}
+          earthquakeStatus={eqStatus}
+          radiusKm={radiusKm}
+        />
+
+        <LayerControls
+          visibility={visibility}
+          onToggle={handleToggle}
+          radiusKm={radiusKm}
+          onRadiusChange={setRadiusKm}
+        />
+
+        {/* 말풍선 */}
+        {tooltip && (
+          <ObjectTooltip
+            obj={tooltip.obj}
+            x={tooltip.x}
+            y={tooltip.y}
+            canvasSize={canvasSize}
+            onClose={() => setTooltip(null)}
+          />
+        )}
+      </div>
+    </main>
   );
 }
