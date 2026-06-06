@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const SERVICE_KEY =
   "kkczjLCsRv2RjL0OJxGRL8DNHJ6BCI8rzOzhv8M8OkL2MEwTfr5R70i1YCy7fMhmRTVvm9AovF+mqZjV/B6CMA==";
-const BASE_URL = "https://apis.data.go.kr/1741000/free_wifi_info";
+const BASE_URL = "https://apis.data.go.kr/1741000/free_wifi_info/info";
 
 // 위경도 → 지역명 매핑 (LCTN_ROAD_NM_ADDR LIKE 필터용)
 function getRegionName(lat: number, lng: number): string {
