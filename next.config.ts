@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {},
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
       // satellite.js v7 WASM pthreads 런타임이 node: 스킴으로 모듈을 참조함.
