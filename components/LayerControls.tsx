@@ -12,6 +12,7 @@ interface LayerControlsProps {
 const RADII: RadiusKm[] = [50, 100, 200];
 
 const LAYERS: { key: keyof LayerVisibility; icon: string; label: string; color: string }[] = [
+  { key: 'wifi', icon: '📶', label: 'WIFI', color: '#ffaa00' },
   { key: 'aircraft', icon: '✈', label: 'AIR', color: '#00ff41' },
   { key: 'satellite', icon: '🛰', label: 'SAT', color: '#00bfff' },
   { key: 'earthquake', icon: '🌍', label: 'EQ', color: '#ff4444' },

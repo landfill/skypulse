@@ -14,12 +14,14 @@ const LAYER_COLORS: Record<RadarObject['layer'], string> = {
   aircraft: '#00ff41',
   satellite: '#00bfff',
   earthquake: '#ff4444',
+  wifi: '#ffaa00',
 };
 
 const LAYER_ICONS: Record<RadarObject['layer'], string> = {
   aircraft: '✈',
   satellite: '🛰',
   earthquake: '🌍',
+  wifi: '📶',
 };
 
 export default function ObjectTooltip({

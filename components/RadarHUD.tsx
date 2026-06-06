@@ -10,6 +10,7 @@ interface RadarHUDProps {
   aircraftStatus: DataLayerStatus;
   satelliteStatus: DataLayerStatus;
   earthquakeStatus: DataLayerStatus;
+  wifiStatus: DataLayerStatus;
   radiusKm: number;
 }
 
@@ -19,6 +20,7 @@ export default function RadarHUD({
   aircraftStatus,
   satelliteStatus,
   earthquakeStatus,
+  wifiStatus,
   radiusKm,
 }: RadarHUDProps) {
   // null로 초기화하여 SSR/클라이언트 hydration 불일치 방지
@@ -31,6 +33,7 @@ export default function RadarHUD({
   }, []);
 
   const errors = [
+    wifiStatus.error ? `📶 ${wifiStatus.error}` : null,
     aircraftStatus.error ? `✈ ${aircraftStatus.error}` : null,
     satelliteStatus.error ? `🛰 ${satelliteStatus.error}` : null,
     earthquakeStatus.error ? `🌍 ${earthquakeStatus.error}` : null,

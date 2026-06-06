@@ -9,13 +9,15 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { useAircraft } from '@/hooks/useAircraft';
 import { useEarthquakes } from '@/hooks/useEarthquakes';
 import { useSatellites } from '@/hooks/useSatellites';
+import { useWifi } from '@/hooks/useWifi';
 import type { LayerVisibility, RadiusKm, RadarObject, CanvasPoint } from '@/lib/types';
 
 export default function HomePage() {
   const [visibility, setVisibility] = useState<LayerVisibility>({
-    aircraft: true,
-    satellite: true,
-    earthquake: true,
+    wifi: true,
+    aircraft: false,
+    satellite: false,
+    earthquake: false,
   });
   const [radiusKm, setRadiusKm] = useState<RadiusKm>(50);
   const [tooltip, setTooltip] = useState<{
@@ -36,8 +38,12 @@ export default function HomePage() {
   const { objects: satellites, status: satStatus } = useSatellites(
     location.lat, location.lng, radiusKm, visibility.satellite
   );
+  const { objects: wifiSpots, status: wifiStatus } = useWifi(
+    location.lat, location.lng, radiusKm, visibility.wifi
+  );
 
   const allObjects: RadarObject[] = [
+    ...(visibility.wifi ? wifiSpots : []),
     ...(visibility.aircraft ? aircraft : []),
     ...(visibility.satellite ? satellites : []),
     ...(visibility.earthquake ? earthquakes : []),
@@ -107,6 +113,7 @@ export default function HomePage() {
         <RadarHUD
           location={location}
           objectCount={allObjects.length}
+          wifiStatus={wifiStatus}
           aircraftStatus={acStatus}
           satelliteStatus={satStatus}
           earthquakeStatus={eqStatus}

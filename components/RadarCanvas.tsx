@@ -17,6 +17,7 @@ const RADAR_COLOR = '#00ff41';
 const AIRCRAFT_COLOR = '#00ff41';
 const SATELLITE_COLOR = '#00bfff';
 const QUAKE_COLOR = '#ff4444';
+const WIFI_COLOR = '#ffaa00';
 const SWEEP_PERIOD = 4000; // ms per 360°
 const TRAIL_SEGMENTS = 60; // 잔광 세그먼트 수
 
@@ -179,6 +180,8 @@ export default function RadarCanvas({
           drawSatellite(ctx, x, y, alpha);
         } else if (obj.layer === 'earthquake') {
           drawEarthquake(ctx, x, y, obj.magnitude ?? 2, alpha);
+        } else if (obj.layer === 'wifi') {
+          drawWifi(ctx, x, y, alpha);
         }
       }
 
@@ -321,6 +324,39 @@ export default function RadarCanvas({
     ctx.shadowBlur = 8;
     ctx.fill();
 
+    ctx.restore();
+  };
+
+  const drawWifi = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    alpha: number
+  ) => {
+    const color = `rgba(255,170,0,${alpha})`;
+    ctx.save();
+    ctx.translate(x, y);
+
+    // 3단 호 (225°→315°, 위쪽 방향 WiFi 신호 아이콘)
+    const start = (Math.PI * 5) / 4;
+    const end = (Math.PI * 7) / 4;
+    ctx.shadowColor = WIFI_COLOR;
+    ctx.shadowBlur = 5;
+    [3.5, 6, 8.5].forEach((r) => {
+      ctx.beginPath();
+      ctx.arc(0, 0, r, start, end, false);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // 중심 점
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
     ctx.restore();
   };
 

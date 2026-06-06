@@ -4,7 +4,7 @@ export interface RadarObject {
   id: string;
   lat: number;
   lng: number;
-  layer: 'aircraft' | 'satellite' | 'earthquake';
+  layer: 'aircraft' | 'satellite' | 'earthquake' | 'wifi';
   label: string;
   detail: Record<string, string | number>;
   heading?: number;      // 항공기 방향 (도)
@@ -26,6 +26,7 @@ export interface LayerVisibility {
   aircraft: boolean;
   satellite: boolean;
   earthquake: boolean;
+  wifi: boolean;
 }
 
 export interface DataLayerStatus {
