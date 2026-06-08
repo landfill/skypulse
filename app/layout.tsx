@@ -37,6 +37,7 @@ export default function RootLayout({
     <html
       lang="ko"
       className={`${orbitron.variable} ${shareTechMono.variable} h-full`}
+      suppressHydrationWarning
     >
       <body className="h-full bg-black overflow-hidden">{children}</body>
     </html>
