@@ -19,7 +19,7 @@ export default function HomePage() {
     satellite: false,
     earthquake: false,
   });
-  const [radiusKm, setRadiusKm] = useState<RadiusKm>(50);
+  const [radiusKm, setRadiusKm] = useState<RadiusKm>(5);
   const [tooltip, setTooltip] = useState<{
     obj: RadarObject;
     x: number;
@@ -49,8 +49,21 @@ export default function HomePage() {
     ...(visibility.earthquake ? earthquakes : []),
   ];
 
+  // 레이어별 자연 배율 — 켤 때 자동 적용
+  const LAYER_RADIUS: Record<keyof LayerVisibility, RadiusKm> = {
+    wifi: 5,
+    aircraft: 50,
+    satellite: 200,
+    earthquake: 200,
+  };
+
   const handleToggle = (layer: keyof LayerVisibility) => {
-    setVisibility(v => ({ ...v, [layer]: !v[layer] }));
+    setVisibility(v => {
+      const next = { ...v, [layer]: !v[layer] };
+      // 켜는 경우에만 해당 레이어의 자연 배율로 전환
+      if (!v[layer]) setRadiusKm(LAYER_RADIUS[layer]);
+      return next;
+    });
   };
 
   const handlePointsUpdate = useCallback((pts: CanvasPoint[]) => {

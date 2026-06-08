@@ -9,7 +9,7 @@ interface LayerControlsProps {
   onRadiusChange: (r: RadiusKm) => void;
 }
 
-const RADII: RadiusKm[] = [50, 100, 200];
+const RADII: RadiusKm[] = [5, 50, 100, 200];
 
 const LAYERS: { key: keyof LayerVisibility; icon: string; label: string; color: string }[] = [
   { key: 'wifi', icon: '📶', label: 'WIFI', color: '#ffaa00' },

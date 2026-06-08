@@ -333,31 +333,21 @@ export default function RadarCanvas({
     y: number,
     alpha: number
   ) => {
-    const color = `rgba(255,170,0,${alpha})`;
-    ctx.save();
-    ctx.translate(x, y);
+    // 최소 alpha 0.75 — 스윕이 멀어도 항상 잘 보이도록
+    const a = Math.max(0.75, alpha);
 
-    // 3단 호 (225°→315°, 위쪽 방향 WiFi 신호 아이콘)
-    const start = (Math.PI * 5) / 4;
-    const end = (Math.PI * 7) / 4;
-    ctx.shadowColor = WIFI_COLOR;
-    ctx.shadowBlur = 5;
-    [3.5, 6, 8.5].forEach((r) => {
-      ctx.beginPath();
-      ctx.arc(0, 0, r, start, end, false);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
-
-    // 중심 점
+    // 외곽 링 (구별감)
     ctx.beginPath();
-    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,170,0,${a * 0.45})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    // 채워진 중심 점
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,170,0,${a})`;
+    ctx.fill();
   };
 
   // 메인 RAF 루프
