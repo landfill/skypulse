@@ -11,6 +11,7 @@ interface RadarCanvasProps {
   objects: RadarObject[];
   onPointsUpdate: (points: CanvasPoint[]) => void;
   onTap: (x: number, y: number) => void;
+  onPinch: (dir: 'in' | 'out') => void;
 }
 
 const RADAR_COLOR = '#00ff41';
@@ -28,11 +29,13 @@ export default function RadarCanvas({
   objects,
   onPointsUpdate,
   onTap,
+  onPinch,
 }: RadarCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const startTimeRef = useRef<number>(performance.now());
   const pointsRef = useRef<CanvasPoint[]>([]);
+  const pinchRef = useRef<{ startDist: number; active: boolean } | null>(null);
 
   // 캔버스 크기 계산
   const getSize = () => {
@@ -422,8 +425,40 @@ export default function RadarCanvas({
     };
   }, [drawObjects, onPointsUpdate]);
 
-  // 탭/클릭 핸들러
+  // 핀치줌 — 두 손가락 거리 비율로 반경 스텝 변경
+  const getTouchDist = (e: React.TouchEvent) =>
+    Math.hypot(
+      e.touches[1].clientX - e.touches[0].clientX,
+      e.touches[1].clientY - e.touches[0].clientY
+    );
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 2) {
+      pinchRef.current = { startDist: getTouchDist(e), active: true };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 2 || !pinchRef.current?.active) return;
+    const dist = getTouchDist(e);
+    const ratio = dist / pinchRef.current.startDist;
+    const THRESHOLD = 1.3;
+    if (ratio > THRESHOLD) {
+      onPinch('in');   // 벌리기 → 확대(반경 축소)
+      pinchRef.current.startDist = dist;
+    } else if (ratio < 1 / THRESHOLD) {
+      onPinch('out');  // 오므리기 → 축소(반경 확대)
+      pinchRef.current.startDist = dist;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length < 2) pinchRef.current = null;
+  };
+
+  // 탭/클릭 핸들러 (핀치 중에는 무시)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (pinchRef.current?.active) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -437,6 +472,9 @@ export default function RadarCanvas({
       ref={canvasRef}
       className="touch-none"
       onPointerDown={handlePointerDown}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{ display: 'block', cursor: 'crosshair' }}
     />
   );

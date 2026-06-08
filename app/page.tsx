@@ -80,6 +80,17 @@ export default function HomePage() {
     if (el) setCanvasSize(parseInt(el.style.width ?? '300'));
   }, []);
 
+  const RADII_LIST: RadiusKm[] = [5, 50, 100, 200];
+
+  const handlePinch = useCallback((dir: 'in' | 'out') => {
+    setRadiusKm(prev => {
+      const idx = RADII_LIST.indexOf(prev);
+      if (dir === 'in'  && idx > 0)                    return RADII_LIST[idx - 1];
+      if (dir === 'out' && idx < RADII_LIST.length - 1) return RADII_LIST[idx + 1];
+      return prev;
+    });
+  }, []);
+
   const handleTap = useCallback((x: number, y: number) => {
     // 캔버스 크기 갱신
     updateCanvasSize();
@@ -121,6 +132,7 @@ export default function HomePage() {
           objects={allObjects}
           onPointsUpdate={handlePointsUpdate}
           onTap={handleTap}
+          onPinch={handlePinch}
         />
 
         <RadarHUD
