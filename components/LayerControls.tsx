@@ -11,12 +11,16 @@ interface LayerControlsProps {
 
 const RADII: RadiusKm[] = [1, 5, 50, 100, 200];
 
-const LAYERS: { key: keyof LayerVisibility; icon: string; label: string; color: string }[] = [
+const ALL_LAYERS: { key: keyof LayerVisibility; icon: string; label: string; color: string }[] = [
   { key: 'wifi',      icon: '📶', label: 'WIFI', color: '#ffaa00' },
   { key: 'aircraft',  icon: '✈',  label: 'AIR',  color: '#00ff41' },
   { key: 'satellite', icon: '🛰', label: 'SAT',  color: '#00bfff' },
   { key: 'earthquake',icon: '🌍', label: 'EQ',   color: '#ff4444' },
 ];
+
+const LAYERS = process.env.NEXT_PUBLIC_DISABLE_AIRCRAFT === 'true'
+  ? ALL_LAYERS.filter((l) => l.key !== 'aircraft')
+  : ALL_LAYERS;
 
 export default function LayerControls({
   visibility,
