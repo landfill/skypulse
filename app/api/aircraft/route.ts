@@ -4,9 +4,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { snapBoundingBox } from "@/lib/radar";
 
-// 간단한 서버 인메모리 캐시 (Edge Runtime 미사용 시 유효)
 const cache = new Map<string, { data: unknown; expiresAt: number }>();
-const CACHE_TTL_MS = 10_000; // 10초
+const CACHE_TTL_MS = 10_000;
+
+// OAuth2 액세스 토큰 캐시
+let tokenCache: { token: string; expiresAt: number } | null = null;
+
+async function getBearerToken(): Promise<string | null> {
+  const clientId = process.env.OPENSKY_CLIENT_ID;
+  const clientSecret = process.env.OPENSKY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+
+  const now = Date.now();
+  if (tokenCache && tokenCache.expiresAt > now + 30_000) {
+    return tokenCache.token;
+  }
+
+  const res = await fetch(
+    "https://auth.opensky-network.org/realms/opensky-network/protocol/openid-connect/token",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+      signal: AbortSignal.timeout(8000),
+    }
+  );
+
+  if (!res.ok) return null;
+
+  const json = await res.json() as { access_token: string; expires_in: number };
+  tokenCache = {
+    token: json.access_token,
+    expiresAt: now + json.expires_in * 1000,
+  };
+  return tokenCache.token;
+}
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -19,15 +55,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "lamin/lomin/lamax/lomax 필수" }, { status: 400 });
   }
 
-  // 그리드 스냅 → 캐시 키
   const snapped = snapBoundingBox({ lamin, lomin, lamax, lomax });
   const cacheKey = `${snapped.lamin},${snapped.lomin},${snapped.lamax},${snapped.lomax}`;
   const now = Date.now();
   const hit = cache.get(cacheKey);
   if (hit && hit.expiresAt > now) {
-    return NextResponse.json(hit.data, {
-      headers: { "X-Cache": "HIT" },
-    });
+    return NextResponse.json(hit.data, { headers: { "X-Cache": "HIT" } });
   }
 
   const url = new URL("https://opensky-network.org/api/states/all");
@@ -36,10 +69,18 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("lamax", snapped.lamax.toString());
   url.searchParams.set("lomax", snapped.lomax.toString());
 
+  const headers: Record<string, string> = { "Accept": "application/json" };
+  try {
+    const token = await getBearerToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  } catch {
+    // 토큰 획득 실패 시 비인증으로 진행
+  }
+
   try {
     const res = await fetch(url.toString(), {
       signal: AbortSignal.timeout(8000),
-      headers: { "Accept": "application/json" },
+      headers,
     });
 
     if (!res.ok) {
