@@ -80,7 +80,7 @@ export default function HomePage() {
     if (el) setCanvasSize(parseInt(el.style.width ?? '300'));
   }, []);
 
-  const RADII_LIST: RadiusKm[] = [5, 50, 100, 200];
+  const RADII_LIST: RadiusKm[] = [1, 5, 50, 100, 200];
 
   const handlePinch = useCallback((dir: 'in' | 'out') => {
     setRadiusKm(prev => {

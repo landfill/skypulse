@@ -20,7 +20,7 @@ export interface GeoLocation {
   isFallback: boolean; // true = 서울 폴백
 }
 
-export type RadiusKm = 5 | 50 | 100 | 200;
+export type RadiusKm = 1 | 5 | 50 | 100 | 200;
 
 export interface LayerVisibility {
   aircraft: boolean;

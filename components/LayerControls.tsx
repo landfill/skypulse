@@ -9,7 +9,7 @@ interface LayerControlsProps {
   onRadiusChange: (r: RadiusKm) => void;
 }
 
-const RADII: RadiusKm[] = [5, 50, 100, 200];
+const RADII: RadiusKm[] = [1, 5, 50, 100, 200];
 
 const LAYERS: { key: keyof LayerVisibility; icon: string; label: string; color: string }[] = [
   { key: 'wifi',      icon: '📶', label: 'WIFI', color: '#ffaa00' },
@@ -68,7 +68,7 @@ export default function LayerControls({
             onClick={() => onRadiusChange(r)}
             className="font-radar"
             style={{
-              width: 54,
+              width: 46,
               padding: '6px 0',
               background: r === radiusKm ? 'rgba(0,255,65,0.15)' : 'rgba(0,0,0,0.6)',
               border: `1px solid ${r === radiusKm ? '#00ff41' : '#333'}`,
