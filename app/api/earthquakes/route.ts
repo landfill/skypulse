@@ -26,8 +26,9 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       const errorText = await res.text();
+      const truncated = errorText.length > 200 ? errorText.slice(0, 200) + "..." : errorText;
       return NextResponse.json(
-        { error: `USGS API Error (${res.status}): ${errorText}` },
+        { error: `USGS API Error (${res.status}): ${truncated}` },
         { status: res.status }
       );
     }
