@@ -25,7 +25,11 @@ export async function GET(req: NextRequest) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: `USGS ${res.status}` }, { status: res.status });
+      const errorText = await res.text();
+      return NextResponse.json(
+        { error: `USGS API Error (${res.status}): ${errorText}` },
+        { status: res.status }
+      );
     }
 
     const data = await res.json();
